@@ -115,9 +115,6 @@ def traceback(T, s1, s2):
             i -= 1
         align1 += a1
         align2 += a2
-    print('mid')
-    print(align1)
-    print(align2)
     align1 = align1[::-1]
     align2 = align2[::-1]
     sym = ''
