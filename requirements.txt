@@ -3,4 +3,3 @@ numpy>=1.11.2
 pytest>=3.0
 pandas
 biopython
-itertools
