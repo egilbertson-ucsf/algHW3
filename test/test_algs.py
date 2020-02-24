@@ -11,7 +11,7 @@ def test_smithwaterman():
     assert(align1 == align2 == align == "TTTT")
     
     score, align1, align2, align = algs.sw("GCTA", "GCTTTA", "BLOSUM50")
-    assert(align1 == "GC--TA" or assign1 == "GCT--A")
+    assert(align1 == "GC--TA" or align1 == "GCT--A")
     assert(align2 =="GCTTTA")
 
 def test_scoring():
