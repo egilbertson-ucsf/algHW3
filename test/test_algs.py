@@ -6,6 +6,7 @@ def test_roc():
 
 def test_smithwaterman():
     score, align1, align2, align = algs.sw("TTTT", "TTTT", "BLOSUM50")
+    print('a1')
     print(align1)
     assert(align1 == align2 == align == "TTTT")
     
