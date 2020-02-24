@@ -3,7 +3,7 @@ import numpy as np
 from Bio import SeqIO
 import itertools
 
-def sw(seq1, seq2, method, gap_start = 10, gap_extend = 2):
+def sw(seq1, seq2, method, gap_start = -10, gap_extend = -2):
     M, X, Y = initialize_scoring_matrices(seq1, seq2)
     scoring = read_scoring_matrix(method)
     M, X, Y , PM, PX, PY= fill_matrix(M, X, Y, scoring, seq1, seq2, gap_start, gap_extend)
@@ -15,7 +15,7 @@ def sw(seq1, seq2, method, gap_start = 10, gap_extend = 2):
     return score, align1, align2, sym
 
 
-def score(seq1, seq2, method, gap_start = 10, gap_extend = 2):
+def score(seq1, seq2, method, gap_start = -10, gap_extend = -2):
     M, X, Y = initialize_scoring_matrices(seq1, seq2)
     scoring = read_scoring_matrix(method)
     M, X, Y , PM, PX, PY= fill_matrix(M, X, Y, scoring, seq1, seq2, gap_start, gap_extend)
