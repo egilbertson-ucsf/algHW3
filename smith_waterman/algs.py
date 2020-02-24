@@ -10,7 +10,7 @@ def sw(seq1, seq2, method, gap_start = 10, gap_extend = 2):
     SMat, T, score = choose_trace_start(M, X, Y, PM, PX, PY)
     print('hi')
     print(seq1)
-    align1, sym, align2, identity = traceback(T, seq1, seq2
+    align1, sym, align2, identity = traceback(T, seq1, seq2)
     print(align1)
     return score, align1, align2, sym
 
