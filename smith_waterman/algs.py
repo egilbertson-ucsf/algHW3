@@ -3,16 +3,21 @@ import numpy as np
 from Bio import SeqIO
 import itertools
 
-def sw(seq1, seq2, method, gap_start, gap_extend):
+def sw(seq1, seq2, method, gap_start = 10, gap_extend = 2):
     M, X, Y = initialize_scoring_matrices(seq1, seq2)
     scoring = read_scoring_matrix(method)
-    M, X, Y = fill_matrix(M, X, Y, scoring, seq1, seq2, gap_start, gap_extend)
-    ali, a_score = traceback(M, X, Y, seq2)
-    return ali[0], a_score
+    M, X, Y , PM, PX, PY= fill_matrix(M, X, Y, scoring, seq1, seq2, gap_start, gap_extend)
+    SMat, T, score = choose_trace_start(M, X, Y, PM, PX, PY)
+    align1, sym, align2, identity = traceback(T, seq1, seq2)
+    return score, align1, align2, sym
 
 
-def score():
-    return None
+def score(seq1, seq2, method, gap_start, gap_extend):
+    M, X, Y = initialize_scoring_matrices(seq1, seq2)
+    scoring = read_scoring_matrix(method)
+    M, X, Y , PM, PX, PY= fill_matrix(M, X, Y, scoring, seq1, seq2, gap_start, gap_extend)
+    SMat, T, score = choose_trace_start(M, X, Y, PM, PX, PY)
+    return score
 
 def roc():
     return None
@@ -25,25 +30,40 @@ def initialize_scoring_matrices(a, b):
     return M, X, Y
 
 def fill_matrix(M, X, Y, scoring, a, b, gap_start, gap_extend):
-    for i, j in itertools.product(range(1, M.shape[0]-1), range(1, M.shape[1]-1)):
-        match_score = scoring.loc[a[i], b[j]]
-        M[i,j] = match_score + max(M[i-1, j-1], X[i-1, j-1], Y[i-1, j-1], 0)
+    PM = M.copy()
+    PX = X.copy()
+    PY = Y.copy()
+    for i, j in itertools.product(range(1, M.shape[0]), range(1, M.shape[1])):
+        match_score = scoring.loc[a[i-1], b[j-1]]
+        m1 = [3, M[i-1, j-1]]
+        m2 = [2, X[i-1, j-1]]
+        m3 = [1, Y[i-1, j-1]]
+        m4 = [0,0]
+        ms= [m1, m2, m3, m4]
+        mat, score = max(ms, key=lambda item: item[1])
+        M[i,j] = match_score + score
+        PM[i,j] = mat
 
-        x1 = gap_start + gap_extend + M[i,j-1]
-        x2 = gap_extend + X[i, j-1]
-        x3 = gap_start + gap_extend + Y[i, j-1]
-        X[i,j] = max(x1, x2, x3, 0)
+        x1 = [3, gap_start + gap_extend + M[i,j-1]]
+        x2 = [3, gap_extend + X[i, j-1]]
+        x3 = [1, gap_start + gap_extend + Y[i, j-1]]
+        x4 = [0,0]
+        xs = [x1, x2, x3, x4]
+        mat, score = max(xs, key=lambda item: item[1])
+        X[i,j] = score
+        PX[i,j] = mat
 
-        y1 = gap_start + gap_extend + M[i-1,j]
-        y2 = gap_start + gap_extend + X[i-1,j]
-        y3 = gap_extend + Y[i-1,j]
-        Y[i,j] = max(y1, y2, y3, 0)
-    return M, X, Y
 
-def traceback(M, X, Y, b, b_='', old_i=0):
-    H, score = choose_trace_mat(M, X, Y)
-    i, j = get_max_loc(H)
-    return trace_recursion(H[0:i, 0:j], b, b_, i), score
+        y1 = [3, gap_start + gap_extend + M[i-1,j]]
+        y2 = [2, gap_start + gap_extend + X[i-1,j]]
+        y3 = [1, gap_extend + Y[i-1,j]]
+        y4 = [0,0]
+        ys = [y1, y2, y3, y4]
+        mat, score = max(ys, key=lambda item: item[1])
+        Y[i,j] = score
+        PY[i,j] = mat
+    return M, X, Y, PM, PX, PY
+
 
 
 def read_seq_file(filename):
@@ -62,7 +82,7 @@ def get_max_loc(H):
     return i, j
 
 
-def choose_trace_mat(M, X, Y):
+def choose_trace_start(M, X, Y, PM, PX, PY):
     mi, mj = get_max_loc(M)
     M_max = M[mi,mj]
     xi, xj = get_max_loc(X)
@@ -70,14 +90,51 @@ def choose_trace_mat(M, X, Y):
     yi, yj = get_max_loc(Y)
     Y_max = Y[yi,yj]
 
-    m=[[M,M_max], [X,X_max], [Y,Y_max]]
+    m=[[M, PM, M_max], [X, PX, X_max], [Y, PX, Y_max]]
 
-    return max(m, key=lambda item: item[1])
+    return max(m, key=lambda item: item[2])
 
 
-def trace_recursion(H, b, b_='', old_i=0):
-    i, j = get_max_loc(H)
-    if H[i, j] == 0:
-        return b_, j
-    b_ = b[j - 1] + '-' + b_ if old_i - i > 1 else b[j - 1] + b_
-    return trace_recursion(H[0:i, 0:j], b, b_, i)
+
+def traceback(T, s1, s2):
+    i, j = get_max_loc(T)
+    align1, align2 = '', ''
+    while T[i][j] != 0:
+        if T[i][j] == 3:
+            a1 = s1[i-1]
+            a2 = s2[j-1]
+            i -= 1
+            j -= 1
+        elif T[i][j] == 2:
+            a1 = '-'
+            a2 = s2[j-1]
+            j -= 1
+        elif T[i][j] == 1:
+            a1 = s1[i-1]
+            a2 = '-'
+            i -= 1
+        align1 += a1
+        align2 += a2
+
+    align1 = align1[::-1]
+    align2 = align2[::-1]
+    sym = ''
+    iden = 0
+    for i in range(len(align1)):
+        a1 = align1[i]
+        a2 = align2[i]
+        if a1 == a2:
+            sym += a1
+            iden += 1
+        elif a1 != a2 and a1 != '-' and a2 != '-':
+            sym += '.'
+        elif a1 == '-' or a2 == '-':
+            sym += '.'
+
+    identity = iden / len(align1) * 100
+    print('Identity = %f percent' % identity)
+    print(align1)
+    print(sym)
+    print(align2)
+
+    return align1, sym, align2, identity
