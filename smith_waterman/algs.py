@@ -18,11 +18,15 @@ def get_score(a1, a2, a, method, gap_start = -10, gap_extend = -1):
     for i in range(len(a)):
         if a[i] in scoring.index:
             score += scoring[a[i]][a[i]]
+            print('match', a[i])
         elif a[i] == '-' and a[i-1] != '-':
             score += (gap_start + gap_extend)
+            print('open', a[i])
         elif a[i] == '-' and a[i-1] == '-':
             score += gap_extend
+            print('extend', a[i])
         elif a[i] == '.':
+            print('mismatch', a1[i], a2[i])
             score += scoring[a1[i]][a2[i]]
     return score
 
