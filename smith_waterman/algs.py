@@ -8,7 +8,7 @@ def sw(seq1, seq2, method, gap_start = -10, gap_extend = -1):
     scoring = read_scoring_matrix(method)
     M, X, Y , PM, PX, PY= fill_matrix(M, X, Y, scoring, seq1, seq2, gap_start, gap_extend)
     SMat, T, score = choose_trace_start(M, X, Y, PM, PX, PY)
-    align1, sym, align2, identity = traceback(T, seq1, seq2)
+    align1, sym, align2, identity = traceback(T, seq1, seq2, SMat)
     return score, align1, align2, sym
 
 
@@ -108,8 +108,8 @@ def choose_trace_start(M, X, Y, PM, PX, PY):
 
 
 
-def traceback(T, s1, s2):
-    i, j = get_max_loc(T)
+def traceback(T, s1, s2, SMat):
+    i, j = get_max_loc(SMat)
     align1, align2 = '', ''
     while T[i][j] != 0:
         if T[i][j] == 3:
