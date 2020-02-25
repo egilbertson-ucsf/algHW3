@@ -3,7 +3,7 @@ import numpy as np
 from Bio import SeqIO
 import itertools
 
-def sw(seq1, seq2, method, gap_start = -10, gap_extend = -2):
+def sw(seq1, seq2, method, gap_start = -10, gap_extend = -1):
     M, X, Y = initialize_scoring_matrices(seq1, seq2)
     scoring = read_scoring_matrix(method)
     M, X, Y , PM, PX, PY= fill_matrix(M, X, Y, scoring, seq1, seq2, gap_start, gap_extend)
@@ -12,11 +12,22 @@ def sw(seq1, seq2, method, gap_start = -10, gap_extend = -2):
     return score, align1, align2, sym
 
 
-def score(seq1, seq2, method, gap_start = -10, gap_extend = -2):
-    M, X, Y = initialize_scoring_matrices(seq1, seq2)
+def get_score(a1, a2, a, method, gap_start = -10, gap_extend = -1):
+    score = 0
     scoring = read_scoring_matrix(method)
-    M, X, Y , PM, PX, PY= fill_matrix(M, X, Y, scoring, seq1, seq2, gap_start, gap_extend)
-    SMat, T, score = choose_trace_start(M, X, Y, PM, PX, PY)
+    for i in range(len(a)):
+        if a[i] in scoring.index:
+            score += scoring[a[i]][a[i]]
+            print('match', a[i])
+        elif a[i] == '-' and a[i-1] != '-':
+            score += (gap_start + gap_extend)
+            print('open', a[i])
+        elif a[i] == '-' and a[i-1] == '-':
+            score += gap_extend
+            print('extend', a[i])
+        elif a[i] == '.':
+            print('mismatch', a1[i], a2[i])
+            score += scoring[a1[i]][a2[i]]
     return score
 
 def roc():
@@ -33,6 +44,7 @@ def fill_matrix(M, X, Y, scoring, a, b, gap_start, gap_extend):
     PM = M.copy()
     PX = X.copy()
     PY = Y.copy()
+    ## try iterrows
     for i, j in itertools.product(range(1, M.shape[0]), range(1, M.shape[1])):
         match_score = scoring.loc[a[i-1], b[j-1]]
         m1 = [3, M[i-1, j-1]]
@@ -67,7 +79,7 @@ def fill_matrix(M, X, Y, scoring, a, b, gap_start, gap_extend):
 
 
 def read_seq_file(filename):
-    seq = list(SeqIO.read(filename, "fasta").seq)
+    seq = list(SeqIO.read(filename, "fasta").seq.upper())
     return seq
 
 def read_scoring_matrix(method):
@@ -128,12 +140,8 @@ def traceback(T, s1, s2):
         elif a1 != a2 and a1 != '-' and a2 != '-':
             sym += '.'
         elif a1 == '-' or a2 == '-':
-            sym += '.'
+            sym += '-'
 
     identity = iden / len(align1) * 100
-    print('Identity = %f percent' % identity)
-    print(align1)
-    print(sym)
-    print(align2)
 
     return align1, sym, align2, identity
