@@ -16,4 +16,6 @@ def test_smithwaterman():
 
 def test_scoring():
     score, align1, align2, align = algs.sw("GCTA", "GCTTTA", "BLOSUM50")
+    print(score)
+    print(algs.get_score(align1, align2, align, "BLOSUM50"))
     assert(algs.get_score(align1, align2, align, "BLOSUM50") == score)
