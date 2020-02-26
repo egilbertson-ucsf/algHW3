@@ -4,6 +4,13 @@ from Bio import SeqIO
 import itertools
 
 def sw(seq1, seq2, method, gap_start = -10, gap_extend = -1):
+    '''
+    Smith-Waterman main function
+    Input: two sequences, string format scoring matrix method, optional gap penalties
+    Output: The max score and alignment representations
+
+    Heavily influenced by powerpoints that TA Laura shared in the class slack
+    '''
     M, X, Y = initialize_scoring_matrices(seq1, seq2)
     scoring = read_scoring_matrix(method)
     M, X, Y , PM, PX, PY= fill_matrix(M, X, Y, scoring, seq1, seq2, gap_start, gap_extend)
@@ -12,26 +19,30 @@ def sw(seq1, seq2, method, gap_start = -10, gap_extend = -1):
     return score, align1, align2, sym
 
 
-def get_score(a1, a2, a, method, gap_start = -10, gap_extend = -1):
+def get_score(a1, a2, a, method, mstring = 'yes', gap_start = -10, gap_extend = -1):
+
+    '''
+    Score an alignment
+    Input: all 3 alignment representations, method and gap penalties
+    Output: sw Score
+    '''
     score = 0
-    scoring = read_scoring_matrix(method)
+    if mstring == 'yes':
+        scoring = read_scoring_matrix(method)
+    else:
+        scoring = method
     for i in range(len(a)):
         if a[i] in scoring.index:
             score += scoring[a[i]][a[i]]
-            print('match', a[i])
         elif a[i] == '-' and a[i-1] != '-':
             score += (gap_start + gap_extend)
-            print('open', a[i])
         elif a[i] == '-' and a[i-1] == '-':
             score += gap_extend
-            print('extend', a[i])
         elif a[i] == '.':
-            print('mismatch', a1[i], a2[i])
             score += scoring[a1[i]][a2[i]]
     return score
 
-def roc():
-    return None
+
 
 
 def initialize_scoring_matrices(a, b):
@@ -41,6 +52,13 @@ def initialize_scoring_matrices(a, b):
     return M, X, Y
 
 def fill_matrix(M, X, Y, scoring, a, b, gap_start, gap_extend):
+    '''
+    fill scoring matrix for sw
+    input: 3 matrices for affign alignment, scoring matrix, 2 sequences and gap penalties
+    output: filled matrices
+
+    Affign alignment using 3 matrices for scoring and 3 for pointers to be used during backtracking
+    '''
     PM = M.copy()
     PX = X.copy()
     PY = Y.copy()
@@ -88,6 +106,7 @@ def read_scoring_matrix(method):
 
 
 def get_max_loc(H):
+    ''' get location of maximum score in sw matrix '''
     H_flip = np.flip(np.flip(H, 0), 1)
     i_, j_ = np.unravel_index(H_flip.argmax(), H_flip.shape)
     i, j = np.subtract(H.shape, (i_ + 1, j_ + 1))
@@ -95,6 +114,7 @@ def get_max_loc(H):
 
 
 def choose_trace_start(M, X, Y, PM, PX, PY):
+    ''' identify which matrix and location to start backtrace at '''
     mi, mj = get_max_loc(M)
     M_max = M[mi,mj]
     xi, xj = get_max_loc(X)
@@ -109,6 +129,8 @@ def choose_trace_start(M, X, Y, PM, PX, PY):
 
 
 def traceback(T, s1, s2, SMat):
+    ''' perform backtracing through sw matrix as chosen by above algorithm and
+            designated pointer matrix '''
     i, j = get_max_loc(SMat)
     align1, align2 = '', ''
     while T[i][j] != 0:
